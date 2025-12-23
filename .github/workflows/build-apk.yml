@@ -31,14 +31,15 @@ jobs:
       - name: Install gomobile
         run: |
           go install golang.org/x/mobile/cmd/gomobile@latest
-          gomobile init
 
-      # 5️⃣ Setup Android SDK + NDK kompatibel
-      - name: Setup Android SDK & NDK
-        uses: android-actions/setup-android@v2
-        with:
-          api-level: 34
-          ndk-version: 25.2.9519653
+      # 5️⃣ Download & setup NDK kompatibel (r25b)
+      - name: Setup Android NDK r25b
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
+          unzip ndk.zip -d $HOME/android-ndk
+          export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+          gomobile init -ndk $ANDROID_NDK_HOME
 
       # 6️⃣ Build Go AAR for Android
       - name: Build AAR with gomobile
@@ -60,6 +61,9 @@ jobs:
       # 🔟 Upload artifact APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        with:
+          name: mcclient-apk
+          path: android-ui/app/build/outputs/apk/release/app-release.apk
         with:
           name: mcclient-apk
           path: android-ui/app/build/outputs/apk/release/app-release.apk
