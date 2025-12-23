@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK (Multi-arch)
 
 on:
   push:
@@ -38,26 +38,43 @@ jobs:
           unzip ndk.zip -d $HOME/android-ndk
           echo "ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b" >> $GITHUB_ENV
           export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b
+
+      # 6️⃣ Build Go AAR for arm64-v8a
+      - name: Build AAR arm64-v8a
+        run: |
+          export GOOS=android
+          export GOARCH=arm64
+          export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b
+          export GOMOBILE_API_LEVEL=21
           $HOME/go/bin/gomobile init
+          $HOME/go/bin/gomobile bind -target=android -o mc-client-arm64.aar ./cmd/android
 
-      # 6️⃣ Build Go AAR for Android
-      - name: Build AAR with gomobile
-        run: $HOME/go/bin/gomobile bind -target=android ./cmd/android
+      # 7️⃣ Build Go AAR for armeabi-v7a
+      - name: Build AAR armeabi-v7a
+        run: |
+          export GOOS=android
+          export GOARCH=arm
+          export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b
+          export GOMOBILE_API_LEVEL=21
+          $HOME/go/bin/gomobile bind -target=android -o mc-client-armv7.aar ./cmd/android
 
-      # 7️⃣ Copy AAR to Android UI project
-      - name: Copy AAR to Android UI
-        run: cp mc-client.aar android-ui/app/libs/
+      # 8️⃣ Copy both AARs to Android UI project
+      - name: Copy AARs to Android UI
+        run: |
+          mkdir -p android-ui/app/libs
+          cp mc-client-arm64.aar android-ui/app/libs/
+          cp mc-client-armv7.aar android-ui/app/libs/
 
-      # 8️⃣ Setup Gradle CLI
+      # 9️⃣ Setup Gradle CLI
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-      # 9️⃣ Build APK release
+      # 🔟 Build APK release
       - name: Build APK via Gradle CLI
         working-directory: android-ui
         run: ./gradlew assembleRelease
 
-      # 🔟 Upload artifact APK
+      # 1️⃣1️⃣ Upload artifact APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
