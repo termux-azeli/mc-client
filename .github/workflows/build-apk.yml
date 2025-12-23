@@ -29,21 +29,20 @@ jobs:
 
       # 4️⃣ Install gomobile
       - name: Install gomobile
-        run: |
-          go install golang.org/x/mobile/cmd/gomobile@latest
+        run: go install golang.org/x/mobile/cmd/gomobile@latest
 
-      # 5️⃣ Download & setup NDK kompatibel (r25b)
+      # 5️⃣ Download & setup Android NDK r25b
       - name: Setup Android NDK r25b
         run: |
           wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
           unzip ndk.zip -d $HOME/android-ndk
+          echo "ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b" >> $GITHUB_ENV
           export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25b
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          gomobile init -ndk $ANDROID_NDK_HOME
+          $HOME/go/bin/gomobile init
 
       # 6️⃣ Build Go AAR for Android
       - name: Build AAR with gomobile
-        run: gomobile bind -target=android ./cmd/android
+        run: $HOME/go/bin/gomobile bind -target=android ./cmd/android
 
       # 7️⃣ Copy AAR to Android UI project
       - name: Copy AAR to Android UI
